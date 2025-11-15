@@ -1,5 +1,13 @@
 name: A workflow for my Hello World App
-on: push
+on:
+  push:
+    branches:
+      - master
+      - develop
+
+
+permissions:
+  contents: write
 
 jobs:
   UnitTests:
@@ -10,17 +18,50 @@ jobs:
         uses: actions/checkout@v2
         with:
           submodules: recursive
+
       - name: Set up JDK 17
         uses: actions/setup-java@v2
         with:
           java-version: '17'
           distribution: 'adopt'
+
       - name: Unit Tests
         run: mvn -Dtest=com.napier.sem.AppTest test
-      - name: Package and Run docker compose
-        run:
-          mvn package -DskipTests
-          docker-compose up --abort-on-container-exit
+
+      - name: CodeCov
+        uses: codecov/codecov-action@v2
+        with:
+            # token: ${{ secrets.CODECOV_TOKEN }} # not required for public repos
+            directory: ./target/site/jacoco
+            flags: Integration Tests # optional
+            verbose: true # optional (default = false)
+
+  IntegrationTests:
+      name: Integration Tests
+      runs-on: ubuntu-latest
+      steps:
+        - name: Checkout
+          uses: actions/checkout@v2
+          with:
+            submodules: recursive
+        - name: Set up JDK 17
+          uses: actions/setup-java@v2
+          with:
+            java-version: '17'
+            distribution: 'adopt'
+        - name: Integration Tests
+          run: |
+              docker compose up -d db
+              mvn -Dtest=com.napier.sem.AppIntegrationTest test
+        - name: Shutdown
+          run: docker compose down
+        - name: CodeCov
+          uses: codecov/codecov-action@v5
+          with:
+                  #token: ${{ secrets.CODECOV_TOKEN }} # not required for public repos
+                  directory: ./target/site/jacoco
+                  flags: Integration Tests # optional
+                  verbose: true # optional (default = false)
   build:
     name: Build and Start Using docker-compose
     runs-on: ubuntu-latest
@@ -29,12 +70,14 @@ jobs:
         uses: actions/checkout@v2
         with:
           submodules: recursive
+
       - name: Set up JDK 17
         uses: actions/setup-java@v2
         with:
           java-version: '17'
           distribution: 'adopt'
+
       - name: Package and Run docker compose
         run: |
           mvn package -DskipTests
-          docker-compose up --abort-on-container-exit
+          docker compose up --abort-on-container-exit

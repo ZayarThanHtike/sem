@@ -1,4 +1,4 @@
-FROM openjdk:24-jdk
-COPY ./target/Lab1-0.1.0.4-jar-with-dependencies.jar /tmp
+FROM eclipse-temurin:18
+COPY ./target/devops.jar /tmp
 WORKDIR /tmp
-ENTRYPOINT ["java", "-jar", "Lab1-0.1.0.4-jar-with-dependencies.jar"]
+ENTRYPOINT ["java", "-jar", "devops.jar", "db:3306", "10000"]
