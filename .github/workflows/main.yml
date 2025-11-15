@@ -22,7 +22,7 @@ jobs:
       - name: Package and Run docker compose
         run:
           mvn package -DskipTests
-          docker-compose up --abort-on-container-exit
+          docker compose up --abort-on-container-exit
   build:
     name: Build and Start Using docker-compose
     runs-on: ubuntu-latest
@@ -39,5 +39,5 @@ jobs:
       - name: Package and Run docker compose
         run: |
           mvn package -DskipTests
-          docker-compose up --abort-on-container-exit
+          docker compose up --abort-on-container-exit
 
