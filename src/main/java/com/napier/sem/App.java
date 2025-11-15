@@ -1,17 +1,33 @@
 package com.napier.sem;
 
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.Collections;
 
+@SpringBootApplication
+@RestController
 public class App
 {
+    /**
+     * Connection to MySQL database.
+     */
     private static Connection con = null;
 
-    public void connect(String location, int delay) {
+    /**
+     * Connect to the MySQL database.
+     */
+    public static void connect(String location, int delay)
+    {
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
         } catch (ClassNotFoundException e) {
@@ -20,12 +36,9 @@ public class App
         }
 
         int retries = 10;
-        boolean shouldWait = false;
         for (int i = 0; i < retries; ++i) {
             System.out.println("Connecting to database...");
             try {
-                if (shouldWait) Thread.sleep(delay);
-
                 con = DriverManager.getConnection(
                         "jdbc:mysql://" + location + "/employees?allowPublicKeyRetrieval=true&useSSL=false",
                         "root", "example");
@@ -34,15 +47,17 @@ public class App
             } catch (SQLException sqle) {
                 System.out.println("Failed to connect to database attempt " + i);
                 System.out.println(sqle.getMessage());
-                shouldWait = true;
-            } catch (InterruptedException ie) {
-                System.out.println("Thread interrupted? Should not happen.");
             }
         }
     }
 
-    public void disconnect() {
-        if (con != null) {
+    /**
+     * Disconnect from the MySQL database.
+     */
+    public static void disconnect()
+    {
+        if (con != null)
+        {
             try {
                 con.close();
                 System.out.println("Database connection closed.");
@@ -52,7 +67,12 @@ public class App
         }
     }
 
-    public Employee getEmployee(int ID)
+    /**
+     * Get a single employee via URL:
+     * http://localhost:8080/employee?id=10002
+     */
+    @RequestMapping("employee")
+    public Employee getEmployee(@RequestParam(value = "id") String ID)
     {
         try
         {
@@ -78,6 +98,10 @@ public class App
             return null;
         }
     }
+
+    // ------------------------------
+    // EVERYTHING BELOW HERE IS UNCHANGED
+    // ------------------------------
 
     public void displayEmployee(Employee emp)
     {
@@ -235,18 +259,16 @@ public class App
         }
     }
 
+    /**
+     * Start Spring Boot app
+     */
     public static void main(String[] args) {
-        App a = new App();
-
         if (args.length < 1) {
-            a.connect("localhost:33060", 10000);
+            connect("localhost:33060,", 3000);
         } else {
-            a.connect(args[0], Integer.parseInt(args[1]));
+            connect(args[0], 3000);
         }
 
-        ArrayList<Employee> employees = App.getSalariesByRole("Manager");
-        App.outputEmployees(employees, "ManagerSalaries.md");
-
-        a.disconnect();
+        SpringApplication.run(App.class, args);
     }
 }
